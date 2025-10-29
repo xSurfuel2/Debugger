@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EL BUGGER MALDITO — Túnel del Terror Digital</title>
+  <style>
+    :root{
+      --bg:#07080a;
+      --card:#0c0f14;
+      --accent:#e11d48;
+      --ok:#10b981;
+      --warn:#f59e0b;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --green:#22c55e;
+      --red:#ef4444;
+    }
+    *{box-sizing:border-box}
+    html, body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans';
+      color:var(--text); background:#07080a;
+      overflow:hidden;
+    }
+    .container{max-width:1100px; margin:0 auto; padding:20px}
+    header{display:flex; align-items:center; gap:14px; padding:10px 0 20px 0;}
+    header h1{font-size: clamp(24px, 3vw, 36px); margin:0; letter-spacing:.5px}
+    .glow{ text-shadow: 0 0 18px rgba(225,29,72,.55); color:var(--accent)}
+
+    .card{
+      background: linear-gradient(180deg, rgba(225,29,72,.06), rgba(15,17,23,.9));
+      border:1px solid rgba(225,29,72,.25);
+      box-shadow: 0 10px 40px rgba(0,0,0,.5), inset 0 0 40px rgba(225,29,72,.08);
+      padding:20px; border-radius:18px;
+    }
+    .row{display:grid; grid-template-columns: 1.1fr .9fr; gap:18px}
+    @media (max-width: 900px){ .row{grid-template-columns:1fr} body{overflow:auto} }
+
+    .btn{
+      background: linear-gradient(180deg, #ef2c5b, #b00d2f);
+      border:1px solid rgba(225,29,72,.6);
+      color:white; padding:12px 18px; border-radius:14px; cursor:pointer;
+      font-weight:700; letter-spacing:.4px; transition:.2s transform;
+      box-shadow: 0 6px 24px rgba(225,29,72,.35);
+    }
+    .btn:hover{ transform: translateY(-1px) scale(1.01) }
+    .btn:active{ transform: translateY(0) scale(.99) }
+
+    .pill{ display:inline-flex; gap:10px; align-items:center; font-size:14px; padding:8px 10px; background:#10131a; border:1px solid #1f2937; border-radius:14px}
+    .small{font-size:12px; color:var(--muted)}
+
+    /* Game area */
+    #game{
+      position:relative; height:520px; background:#0a0c11; border:1px solid #1f2937; border-radius:18px; overflow:hidden;
+      box-shadow: inset 0 20px 120px rgba(225,29,72,.07), inset 0 -20px 120px rgba(2,132,199,.06);
+      isolation:isolate;
+    }
+
+    /* BUGGER "coding" background */
+    .codebg{
+      position:absolute; inset:0; color:#9ef99e; opacity:.08; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      white-space:pre; overflow:hidden; padding:18px; line-height:1.35; z-index:0;
+      filter: blur(.3px);
+    }
+    .typecursor{
+      display:inline-block; width:10px; background:#9ef99e; animation: blink 1s steps(1) infinite; margin-left:2px; height:1em; vertical-align:-2px;
+    }
+    @keyframes blink{ 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+    .hud{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px}
+    .bar{height:12px; width:220px; background:#12151d; border-radius:999px; border:1px solid #1f2937; overflow:hidden; position:relative}
+    .bar>span{display:block; height:100%; width:0%; background:linear-gradient(90deg, #f59e0b, #ef4444); transition: width .2s ease}
+
+    /* Targets */
+    .bug, .virus{
+      position:absolute; width:64px; height:64px; border-radius:14px; cursor:crosshair;
+      display:grid; place-items:center; font-weight:900; font-size:26px;
+      border:2px solid rgba(255,255,255,.12);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 30px rgba(255,255,255,.06);
+      animation: twitch .9s infinite;
+      user-select:none;
+    }
+    .bug{ background: radial-gradient(circle at 30% 20%, rgba(34,197,94,.35), rgba(10,20,14,.9)); color: var(--green) }
+    .bug::after{ content:"{}"; text-shadow:0 0 10px rgba(34,197,94,.6) }
+    .virus{ background: radial-gradient(circle at 70% 30%, rgba(239,68,68,.4), rgba(20,10,12,.95)); color: var(--red) }
+    .virus::after{ content:"🦠"; filter: drop-shadow(0 0 8px rgba(239,68,68,.6)); font-size:30px }
+    @keyframes twitch {
+      0%{ transform: translate(0,0) rotate(0deg) }
+      50%{ transform: translate(1px,-1px) rotate(1deg) }
+      100%{ transform: translate(0,0) rotate(0deg) }
+    }
+    .pop{animation: pop .2s ease; }
+    @keyframes pop{ from{ transform: scale(.75)} to{ transform: scale(1)} }
+
+    .toast{
+      position:absolute; right:14px; top:14px; background:rgba(10,14,20,.9); border:1px solid #334155; color:#e5e7eb; padding:8px 10px; border-radius:12px; font-size:14px; z-index:5
+    }
+
+    /* Overlay screens */
+    .overlay{
+      position:absolute; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; flex-direction:column; gap:16px; z-index:10;
+      text-align:center; padding:18px
+    }
+    .overlay.show{display:flex}
+    .overlay .panel{max-width:760px}
+    .title{font-size: clamp(22px, 4vw, 42px); margin:6px 0 2px 0}
+    .subtitle{color:var(--muted)}
+
+    /* Jumps & flashes */
+    .jumpscare{ position:absolute; inset:0; background: #000; display:none; z-index:50 }
+    .jumpscare img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; animation: shake .5s steps(3) 6 }
+    @keyframes shake{
+      0%{ transform: translate(0,0) scale(1.1) }
+      25%{ transform: translate(-10px, 8px) scale(1.12) }
+      50%{ transform: translate(12px, -10px) scale(1.13) }
+      75%{ transform: translate(-8px, 12px) scale(1.12) }
+      100%{ transform: translate(0,0) scale(1.1) }
+    }
+    .flash{ position:absolute; inset:0; background: rgba(255,0,0,.18); display:none; z-index:40 }
+
+    .controls{display:flex; gap:12px; flex-wrap:wrap}
+    .switch{display:flex; align-items:center; gap:8px; cursor:pointer}
+    .switch input{accent-color: var(--accent)}
+    a.link{color:#93c5fd}
+
+    /* =========================
+       WIN overlay — 100% HTML/CSS
+       ========================= */
+    #overlayWin.overlay{ background: rgba(0,0,0,.78); }
+
+    .win-wrap{
+      position: relative;
+      width: min(980px, 92vw);
+      border-radius: 22px;
+      overflow: hidden;
+      border:1px solid rgba(16,185,129,.35);
+      box-shadow: 0 30px 120px rgba(0,0,0,.65);
+      isolation:isolate;
+    }
+    /* Fondo animado “scanline/glow” */
+    .win-bg{
+      position:absolute; inset:0; z-index:0;
+      background:
+        radial-gradient(120% 100% at 50% -10%, rgba(16,185,129,.15), rgba(0,0,0,.85) 60%),
+        linear-gradient(180deg, rgba(2,6,8,.4), rgba(0,0,0,.85));
+    }
+    .win-bg::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0) 0px,
+        rgba(0,0,0,0) 2px,
+        rgba(16,185,129,.05) 3px
+      );
+      mix-blend-mode: overlay;
+      animation: scan 2.2s linear infinite;
+      pointer-events:none;
+    }
+    @keyframes scan{
+      0%{ transform: translateY(-10%) }
+      100%{ transform: translateY(10%) }
+    }
+    .win-glow{
+      position:absolute; inset:0; z-index:0;
+      background:
+        radial-gradient(60% 40% at 50% 0%, rgba(34,197,94,.25), transparent 60%),
+        radial-gradient(80% 60% at 50% 100%, rgba(2,132,199,.12), transparent 60%);
+      filter: blur(10px);
+      opacity:.7;
+      pointer-events:none;
+    }
+    .win-panel{
+      position:relative; z-index:1;
+      padding: clamp(18px, 3.5vw, 30px);
+      display:grid; gap:14px; text-align:center;
+    }
+    .win-badge{
+      display:inline-flex; gap:8px; align-items:center; justify-content:center;
+      padding:8px 12px; border-radius:999px;
+      background: rgba(16,185,129,.12);
+      border:1px solid rgba(16,185,129,.35);
+      color:#d1fae5; font-weight:800; letter-spacing:.3px;
+      margin: 2px auto 6px auto;
+    }
+    .win-title{
+      font-size: clamp(28px, 4.8vw, 48px);
+      margin: 6px 0 0 0;
+      color: #10b981;
+      text-shadow:
+        0 0 10px rgba(16,185,129,.45),
+        0 0 20px rgba(16,185,129,.35),
+        0 0 40px rgba(16,185,129,.25);
+    }
+    .win-sub{
+      color:#d4f7ea; opacity:.95;
+      font-size: clamp(14px, 2.4vw, 16px);
+    }
+    .win-grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:12px; margin-top:6px;
+    }
+    @media (max-width: 680px){
+      .win-grid{ grid-template-columns:1fr; }
+    }
+    .win-chip{
+      background: rgba(16,185,129,.10);
+      border:1px solid rgba(16,185,129,.25);
+      border-radius:14px; padding:10px 12px;
+      display:flex; align-items:center; gap:10px; justify-content:center;
+      color:#bdf6e2; font-weight:700;
+    }
+    .win-chip .dot{
+      width:10px; height:10px; border-radius:999px; background:#10b981;
+      box-shadow: 0 0 10px #10b981;
+    }
+    .win-actions{ display:flex; justify-content:center; gap:10px; margin-top:12px; flex-wrap:wrap }
+
+    /* Icono SVG animado */
+    .win-ico{
+      width:90px; height:90px; margin: 8px auto 2px auto;
+      filter: drop-shadow(0 0 18px rgba(16,185,129,.35));
+    }
+    .win-ico .ring{
+      stroke: rgba(16,185,129,.5);
+      stroke-dasharray: 440; stroke-dashoffset: 440;
+      animation: dash 1.2s ease forwards;
+      stroke-width: 6; fill: none;
+    }
+    .win-ico .tick{
+      stroke: #10b981; stroke-linecap: round; stroke-linejoin: round;
+      stroke-width: 10; fill: none;
+      stroke-dasharray: 90; stroke-dashoffset: 90;
+      animation: dash 0.8s 0.3s ease forwards;
+    }
+    .win-ico .spark{
+      stroke:#a7f3d0; stroke-width:3; stroke-linecap:round;
+      opacity:0; transform-origin: center;
+      animation: spark 1s .65s ease forwards;
+    }
+    @keyframes dash{ to{ stroke-dashoffset: 0; } }
+    @keyframes spark{
+      0%{ opacity:0; transform: scale(.6) rotate(0deg) }
+      100%{ opacity:1; transform: scale(1) rotate(45deg) }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="pill"><span>🎃</span> <strong>El Bugger Maldito</strong> <span class="small">Módulo DIW · Halloween</span></div>
+    </header>
+
+    <div class="row">
+      <section class="card">
+        <div class="hud" aria-live="polite">
+          <div class="pill">⏱️ Tiempo: <strong id="time">00:30</strong></div>
+          <div class="pill">🪲 Bugs parcheados: <strong id="score">0</strong> / <strong id="target">20</strong></div>
+          <div class="pill">🧪 Dificultad: <strong id="difficulty">Normal</strong></div>
+          <div class="bar" role="progressbar" aria-label="Corrupción del sistema">
+            <span id="corruption" style="width:0%"></span>
+          </div>
+          <div class="controls">
+            <label class="switch"><input type="checkbox" id="muteToggle">🔇 Silencio</label>
+            <label class="switch"><input type="checkbox" id="contrastToggle">🌓 Alto contraste</label>
+          </div>
+        </div>
+        <div id="game" aria-label="Zona de juego" role="application">
+          <pre class="codebg" id="codebg"></pre>
+          <div id="flash" class="flash" aria-hidden="true"></div>
+          <div id="toast" class="toast" style="display:none"></div>
+
+          <div id="overlayStart" class="overlay show">
+            <div class="panel">
+              <div class="pill">Historia</div>
+              <h2 class="title glow">“El Bugger” está escribiendo código corrupto</h2>
+              <p class="subtitle">Parchea los <strong>tokens {}</strong> en <strong>verde</strong> y evita tocar los <strong>virus</strong> <span style="color:#ef4444">rojos</span>. Necesitas <strong>20 parches</strong> en <strong>30s</strong>. Tocar un virus = <strong>-2 puntos</strong> y mini susto.</p>
+              <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap">
+                <button class="btn" id="btnStart">Iniciar experiencia</button>
+                <button class="btn" id="btnHard">Modo Difícil</button>
+              </div>
+              <p class="small" style="margin-top:8px">Accesibilidad: Alto contraste / Silencio disponibles.</p>
+            </div>
+          </div>
+
+          <!-- WIN overlay rediseñado en HTML/CSS -->
+          <div id="overlayWin" class="overlay">
+            <div class="win-wrap" role="dialog" aria-label="Victoria">
+              <div class="win-bg"></div>
+              <div class="win-glow"></div>
+
+              <div class="win-panel">
+                <!-- Icono SVG animado -->
+                <svg class="win-ico" viewBox="0 0 200 200" aria-hidden="true">
+                  <circle class="ring" cx="100" cy="100" r="70"/>
+                  <path class="tick" d="M70 104 L95 128 L132 82"/>
+                  <line class="spark" x1="100" y1="18"  x2="100" y2="36"/>
+                  <line class="spark" x1="182" y1="100" x2="164" y2="100"/>
+                  <line class="spark" x1="100" y1="182" x2="100" y2="164"/>
+                  <line class="spark" x1="18"  y1="100" x2="36"  y2="100"/>
+                </svg>
+
+                <span class="win-badge">✅ Sistema estabilizado</span>
+                <h2 class="win-title">¡Has vencido al Bugger!</h2>
+                <p class="win-sub">
+                  Preséntate en la <strong>Ruleta de la Muerte</strong> (JavaFX) y muestra esta pantalla.
+                </p>
+
+                <div class="win-grid" role="status" aria-live="polite">
+                  <div class="win-chip"><span class="dot"></span> Integridad UI: 100%</div>
+                  <div class="win-chip"><span class="dot"></span> Corrupción: 0%</div>
+                  <div class="win-chip"><span class="dot"></span> Acceso concedido</div>
+                </div>
+
+                <div class="win-actions">
+                  <button class="btn" id="btnAgain">Volver a jugar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="overlayFail" class="overlay">
+            <div class="panel">
+              <div class="pill">⛔ Fracaso</div>
+              <h2 class="title glow">El Bugger te ha poseído</h2>
+              <p class="subtitle">La corrupción ha devorado tu interfaz. Respira… y vuelve a intentarlo.</p>
+              <button class="btn" id="btnRetry">Reintentar</button>
+            </div>
+          </div>
+
+          <div id="jumpscare" class="jumpscare" aria-hidden="true">
+            <img src="assets/jumpscare.gif" alt="Imagen de susto" />
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="pill">📋 Instrucciones</div>
+        <h3 style="margin:10px 0 6px 0">Cómo jugar</h3>
+        <ol>
+          <li>Haz clic sobre los <strong style="color:#22c55e">{}</strong> verdes para parchear.</li>
+          <li>Evita los <strong style="color:#ef4444">🦠 virus rojos</strong> (penalizan -2 y asustan).</li>
+          <li>Parchea <strong id="targetAside">20</strong> antes de que el reloj llegue a 0.</li>
+        </ol>
+        <h3 style="margin:16px 0 6px 0">Usabilidad / Accesibilidad</h3>
+        <ul>
+          <li>Modo <strong>Alto contraste</strong>.</li>
+          <li>Conmutador de <strong>Silencio</strong>.</li>
+          <li>Mensajes por voz (SR) y feedback visual/auditivo.</li>
+        </ul>
+        <p class="small">SFX: generados proceduralmente para esta demo.</p>
+      </aside>
+    </div>
+  </div>
+
+  <audio id="sfxGlitch" src="assets/glitch.wav" preload="auto"></audio>
+  <audio id="sfxPatch" src="assets/patch.wav" preload="auto"></audio>
+  <audio id="sfxWin" src="assets/win.wav" preload="auto"></audio>
+  <audio id="sfxScream" src="assets/scream.mp3" preload="auto"></audio>
+  <audio id="amb" src="assets/ambient.wav" preload="auto" loop></audio>
+
+  <script>
+    const gameEl = document.getElementById('game');
+    const timeEl = document.getElementById('time');
+    const scoreEl = document.getElementById('score');
+    const targetEl = document.getElementById('target');
+    const targetAsideEl = document.getElementById('targetAside');
+    const corruptionEl = document.getElementById('corruption');
+    const toast = document.getElementById('toast');
+    const overlayStart = document.getElementById('overlayStart');
+    const overlayWin = document.getElementById('overlayWin');
+    const overlayFail = document.getElementById('overlayFail');
+    const btnStart = document.getElementById('btnStart');
+    const btnHard = document.getElementById('btnHard');
+    const btnRetry = document.getElementById('btnRetry');
+    const btnAgain = document.getElementById('btnAgain');
+    const sfxGlitch = document.getElementById('sfxGlitch');
+    const sfxPatch = document.getElementById('sfxPatch');
+    const sfxWin = document.getElementById('sfxWin');
+    const sfxScream = document.getElementById('sfxScream');
+    const amb = document.getElementById('amb');
+    const difficultyEl = document.getElementById('difficulty');
+    const jumpscareEl = document.getElementById('jumpscare');
+    const flashEl = document.getElementById('flash');
+    const muteToggle = document.getElementById('muteToggle');
+    const contrastToggle = document.getElementById('contrastToggle');
+    const codebg = document.getElementById('codebg');
+
+    let score=0, target=20, timeLeft=30, corruption=0, timer=null, spawner=null, running=false;
+    let spawnEvery=900, bugLife=1400, corrupRate=0.35;
+    let codeBuffer = "";
+    let typeTimer = null;
+
+    function fmtTime(n){ const m = Math.floor(n/60), s=(n%60).toString().padStart(2,'0'); return `${m}:${s}` }
+
+    function showToast(msg, ms=900){
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(()=> toast.style.display='none', ms);
+    }
+
+    /* Volúmenes centralizados */
+    function setVolumes() {
+      const muted = muteToggle.checked;
+      const BASE = muted ? 0 : 1;
+      sfxGlitch.volume = 0.18 * BASE; // glitch mucho más bajo
+      sfxPatch.volume = 0.45 * BASE;
+      sfxWin.volume   = 0.60 * BASE;
+      sfxScream.volume= 0.85 * BASE; // tu scream ya existente
+      amb.volume      = 0.16 * BASE;
+    }
+    setVolumes();
+
+    // "Bugger is typing" effect
+    const lines = [
+      "while(true){ // BUGGER injects",
+      "  for(i=0;i<666;i++){ corrupt(system[i]); }",
+      "  if(human.parchea){ mutate(); }",
+      "  printf(\"ERR:%d\", rand()); /* !!! */",
+      "  // TODO: eat { } tokens...",
+      "}",
+      "fn mutate(){ return inject(0xDEAD, 0xBEEF); }",
+      "/* █████ Corruption rising █████ */"
+    ];
+    let li=0, ci=0;
+    function typeTick(){
+      if(!running) return;
+      codeBuffer += lines[li].slice(ci, ci+1);
+      ci++;
+      if(ci>=lines[li].length){
+        codeBuffer += "\n";
+        li = (li+1)%lines.length;
+        ci = 0;
+      }
+      const parts = codeBuffer.split("\n");
+      if(parts.length>18){ codeBuffer = parts.slice(-18).join("\n"); }
+      codebg.textContent = codeBuffer;
+    }
+
+    function spawnEntity(){
+      if(!running) return;
+      const isVirus = Math.random() < 0.28; // ~28% virus señuelo
+      const b = document.createElement('div');
+      b.className=(isVirus?'virus':'bug')+' pop';
+      b.setAttribute('role','button'); b.tabIndex=0;
+      const gw = gameEl.clientWidth, gh = gameEl.clientHeight;
+      const x = Math.max(6, Math.min(gw-70, Math.random()*gw));
+      const y = Math.max(6, Math.min(gh-70, Math.random()*gh));
+      b.style.left = x+'px'; b.style.top = y+'px';
+
+      const onHit = ()=>{
+        if(!b.isConnected) return;
+        b.remove();
+        if(isVirus){
+          score = Math.max(0, score - 2);
+          scoreEl.textContent = score;
+          miniScare();
+          showToast('🦠 ¡Virus! -2 puntos');
+          corruption = Math.min(100, corruption + 6);
+          updateCorruption();
+        }else{
+          score++; scoreEl.textContent = score;
+          sfxPatch.currentTime=0; sfxPatch.play().catch(()=>{});
+          if(score>=target){ win(); }
+        }
+      };
+      b.addEventListener('click', onHit);
+      b.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); onHit(); } });
+
+      gameEl.appendChild(b);
+      // glitch más sutil al aparecer
+      const prev = sfxGlitch.volume;
+      sfxGlitch.volume = Math.min(prev, 0.12);
+      sfxGlitch.currentTime=0; sfxGlitch.play().catch(()=>{});
+      setTimeout(()=>{ sfxGlitch.volume = prev; }, 120);
+
+      // vida de la entidad
+      setTimeout(()=>{
+        if(b.isConnected){
+          b.remove();
+          if(!isVirus){
+            corruption = Math.min(100, corruption + (difficultyEl.textContent==='Difícil' ? 14 : 10));
+            updateCorruption();
+            if(corruption>=100) lose();
+          }
+        }
+      }, bugLife);
+
+      // micro movimientos
+      const mover = setInterval(()=>{
+        if(!b.isConnected){ clearInterval(mover); return; }
+        const dx = (Math.random()*14-7), dy=(Math.random()*14-7);
+        const nx = Math.max(6, Math.min(gw-70, (parseFloat(b.style.left)||0) + dx));
+        const ny = Math.max(6, Math.min(gh-70, (parseFloat(b.style.top)||0) + dy));
+        b.style.left = nx+'px'; b.style.top = ny+'px';
+      }, 120);
+    }
+
+    function miniScare(){
+      flashEl.style.display='block';
+      setTimeout(()=> flashEl.style.display='none', 160);
+      sfxGlitch.currentTime=0; sfxGlitch.play().catch(()=>{});
+    }
+
+    function updateCorruption(){
+      corruptionEl.style.width = Math.max(0, Math.min(100, corruption)) + '%';
+    }
+
+    function tick(){
+      if(!running) return;
+      timeLeft--;
+      timeEl.textContent = fmtTime(timeLeft);
+      corruption = Math.min(100, corruption + (difficultyEl.textContent==='Difícil' ? corrupRate*2 : corrupRate));
+      updateCorruption();
+      if(timeLeft<=0){ if(score>=target) win(); else lose(); }
+      if(corruption>=100) lose();
+    }
+
+    function start(difficult=false){
+      [...document.querySelectorAll('.bug, .virus')].forEach(b=>b.remove());
+      overlayStart.classList.remove('show');
+      overlayWin.classList.remove('show');
+      overlayFail.classList.remove('show');
+      jumpscareEl.style.display='none';
+      score=0; scoreEl.textContent=score;
+      timeLeft=30; timeEl.textContent = fmtTime(timeLeft);
+      corruption=0; updateCorruption();
+      target = difficult? 24 : 20; targetEl.textContent = target; targetAsideEl.textContent = target;
+
+      if(difficult){
+        difficultyEl.textContent = 'Difícil';
+        spawnEvery=600; bugLife=1050; corrupRate=0.5;
+      }else{
+        difficultyEl.textContent = 'Normal';
+        spawnEvery=850; bugLife=1350; corrupRate=0.35;
+      }
+
+      running=true;
+      setVolumes();
+      amb.currentTime=0; amb.play().catch(()=>{});
+
+      timer = setInterval(tick, 1000);
+      spawner = setInterval(spawnEntity, spawnEvery);
+      typeTimer = setInterval(typeTick, 20 + Math.random()*25);
+      showToast('¡Parchea {} y evita 🦠!');
+    }
+
+    function win(){
+      if(!running) return;
+      running=false;
+      clearInterval(timer); clearInterval(spawner); clearInterval(typeTimer);
+      amb.pause();
+      sfxWin.currentTime=0; sfxWin.play().catch(()=>{});
+      overlayWin.classList.add('show');
+      showToast('✅ Sistema estabilizado', 1200);
+    }
+
+    function lose(){
+      if(!running) return;
+      running=false;
+      clearInterval(timer); clearInterval(spawner); clearInterval(typeTimer);
+      amb.pause();
+      overlayFail.classList.add('show');
+      jumpscareEl.style.display='block';
+      sfxScream.currentTime=0; sfxScream.play().catch(()=>{});
+      setTimeout(()=>{ jumpscareEl.style.display='none'; }, 1500);
+      showToast('☠️ Corrupción crítica', 1400);
+    }
+
+    btnStart.addEventListener('click', ()=> start(false));
+    btnHard.addEventListener('click', ()=> start(true));
+    btnRetry.addEventListener('click', ()=> start(difficultyEl.textContent==='Difícil'));
+    btnAgain.addEventListener('click', ()=> start(false));
+
+    muteToggle.addEventListener('change', ()=>{
+      setVolumes();
+      showToast(muteToggle.checked ? 'Sonido desactivado' : 'Sonido activado');
+    });
+
+    contrastToggle.addEventListener('change', ()=>{
+      document.body.style.filter = contrastToggle.checked? 'contrast(1.25) saturate(1.1)' : 'none';
+      showToast(contrastToggle.checked? 'Alto contraste ON' : 'Alto contraste OFF');
+    });
+
+    document.addEventListener('keydown', (e)=>{
+      if(e.key===' '){
+        if(overlayStart.classList.contains('show')) start(false);
+        else if(overlayFail.classList.contains('show')) start(difficultyEl.textContent==='Difícil');
+      }
+    });
+  </script>
+</body>
+</html>
