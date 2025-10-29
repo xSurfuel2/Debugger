@@ -591,6 +591,25 @@
         else if(overlayFail.classList.contains('show')) start(difficultyEl.textContent==='Difícil');
       }
     });
+
+    /* ============================
+       NUEVO: Penalización click fuera (solo Modo Difícil)
+       ============================ */
+    gameEl.addEventListener('click', (e)=>{
+      if(!running) return;
+      if(difficultyEl.textContent !== 'Difícil') return;
+
+      // Si hay alguna overlay visible, no contamos clics
+      if (overlayStart.classList.contains('show') || overlayWin.classList.contains('show') || overlayFail.classList.contains('show')) return;
+
+      // Si el clic fue sobre un bug {} o un virus, no penalizamos aquí
+      if (e.target.closest('.bug') || e.target.closest('.virus')) return;
+
+      // Clic fuera: -1 punto (mínimo 0)
+      score = Math.max(0, score - 1);
+      scoreEl.textContent = score;
+      showToast('❌ ¡Fuera del objetivo! -1 punto');
+    });
   </script>
 </body>
 </html>
