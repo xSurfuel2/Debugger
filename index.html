@@ -246,6 +246,20 @@
       0%{ opacity:0; transform: scale(.6) rotate(0deg) }
       100%{ opacity:1; transform: scale(1) rotate(45deg) }
     }
+
+    /* ===== Nuevo: jumpscare a pantalla completa (solo CSS) ===== */
+    .jumpscare{
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 9999 !important;
+      background: #000;
+      display: none;
+    }
+    .jumpscare img{
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+    }
   </style>
 </head>
 <body>
