@@ -24,7 +24,7 @@
       color:var(--text); background:#07080a;
       overflow:hidden;
     }
-    .container{max-width:1100px; margin:0 auto; padding:20px}
+    .container{max-width:1700px; margin:0 auto; padding:20px}
     header{display:flex; align-items:center; gap:14px; padding:10px 0 20px 0;}
     header h1{font-size: clamp(24px, 3vw, 36px); margin:0; letter-spacing:.5px}
     .glow{ text-shadow: 0 0 18px rgba(225,29,72,.55); color:var(--accent)}
@@ -241,6 +241,7 @@
       opacity:0; transform-origin: center;
       animation: spark 1s .65s ease forwards;
     }
+
     @keyframes dash{ to{ stroke-dashoffset: 0; } }
     @keyframes spark{
       0%{ opacity:0; transform: scale(.6) rotate(0deg) }
@@ -259,6 +260,16 @@
       width: 100vw;
       height: 100vh;
       object-fit: cover;
+    }
+
+    /* ===== NUEVO: caja del modal de encuesta ===== */
+    .modal-box{
+      width:min(520px, 92vw);
+      background: rgba(10,14,20,.95);
+      border:1px solid #334155;
+      border-radius:18px;
+      padding:20px;
+      box-shadow: 0 20px 80px rgba(0,0,0,.6);
     }
   </style>
 </head>
@@ -348,6 +359,20 @@
           <div id="jumpscare" class="jumpscare" aria-hidden="true">
             <img src="assets/jumpscare.gif" alt="Imagen de susto" />
           </div>
+
+          <!-- ===== NUEVO: Modal centrado de encuesta ===== -->
+          <div id="overlaySurvey" class="overlay" role="dialog" aria-modal="true" aria-labelledby="surveyTitle">
+            <div class="panel modal-box">
+              <h3 id="surveyTitle" class="title glow">¿Nos das tu valoración?</h3>
+              <p class="subtitle">¿Quieres responder una breve encuesta sobre la actividad?</p>
+              <div class="win-actions">
+                <button class="btn" id="btnSurveyYes">Ir a la encuesta</button>
+                <button class="btn" id="btnSurveyNo">Ahora no</button>
+              </div>
+            </div>
+          </div>
+          <!-- ============================================ -->
+
         </div>
       </section>
 
@@ -427,6 +452,24 @@
       amb.volume      = 0.16 * BASE;
     }
     setVolumes();
+
+    /* ======= NUEVO: Encuesta en modal centrado (sólo victoria) ======= */
+    const overlaySurvey = document.getElementById('overlaySurvey');
+    const SURVEY_URL = "https://docs.google.com/forms/d/e/1FAIpQLScGCHZOYoWkpwRhF1eT1w92QzmH-thBX_Ii9ZiCOFOECSFFQw/viewform?usp=sharing&ouid=116194055403336429299";
+    function promptSurvey(){
+      overlaySurvey.classList.add('show');
+      const btnSurveyYes = document.getElementById('btnSurveyYes');
+      const btnSurveyNo  = document.getElementById('btnSurveyNo');
+      const closeSurvey = () => overlaySurvey.classList.remove('show');
+
+      btnSurveyYes.onclick = () => { window.open(SURVEY_URL, "_blank", "noopener"); closeSurvey(); };
+      btnSurveyNo.onclick  = closeSurvey;
+
+      // Cerrar con Escape
+      const onKey = (e) => { if(e.key === 'Escape'){ closeSurvey(); document.removeEventListener('keydown', onKey);} };
+      document.addEventListener('keydown', onKey);
+    }
+    /* ========================================== */
 
     // "Bugger is typing" effect
     const lines = [
@@ -570,6 +613,7 @@
       sfxWin.currentTime=0; sfxWin.play().catch(()=>{});
       overlayWin.classList.add('show');
       showToast('✅ Sistema estabilizado', 1200);
+      promptSurvey(); // Mostrar modal centrado de encuesta (sólo victoria)
     }
 
     function lose(){
@@ -582,6 +626,7 @@
       sfxScream.currentTime=0; sfxScream.play().catch(()=>{});
       setTimeout(()=>{ jumpscareEl.style.display='none'; }, 1500);
       showToast('☠️ Corrupción crítica', 1400);
+      // Sin encuesta en derrota
     }
 
     btnStart.addEventListener('click', ()=> start(false));
