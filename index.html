@@ -63,7 +63,14 @@
       position:absolute; inset:0; color:#9ef99e; opacity:.08; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       white-space:pre; overflow:hidden; padding:18px; line-height:1.35; z-index:0;
       filter: blur(.3px);
+      /* ===== NUEVO: evitar selección y eventos ===== */
+      user-select:none; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none;
+      pointer-events:none;
     }
+    /* ===== NUEVO: si se selecciona, no pintar azul ===== */
+    .codebg::selection{ background: transparent; color: inherit; }
+    .codebg::-moz-selection{ background: transparent; color: inherit; }
+
     .typecursor{
       display:inline-block; width:10px; background:#9ef99e; animation: blink 1s steps(1) infinite; margin-left:2px; height:1em; vertical-align:-2px;
     }
@@ -471,6 +478,13 @@
     }
     /* ========================================== */
 
+    // ===== NUEVO: util para limpiar selección antes del susto =====
+    function clearSel(){
+      const s = window.getSelection && window.getSelection();
+      if(s && s.removeAllRanges) s.removeAllRanges();
+      if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    }
+
     // "Bugger is typing" effect
     const lines = [
       "while(true){ // BUGGER injects",
@@ -621,6 +635,7 @@
       running=false;
       clearInterval(timer); clearInterval(spawner); clearInterval(typeTimer);
       amb.pause();
+      clearSel(); // ===== NUEVO: eliminar cualquier selección antes del GIF =====
       overlayFail.classList.add('show');
       jumpscareEl.style.display='block';
       sfxScream.currentTime=0; sfxScream.play().catch(()=>{});
