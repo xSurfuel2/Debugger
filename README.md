@@ -34,6 +34,7 @@ Juego web para la actividad de Halloween del módulo **DIW**. Tu misión: **parc
 
 ![formulario paso 1](./resources/form1.png)  
 ![formulario paso 2](./resources/form2.png)
+![formulario paso 2](./resources/form3.jpg)
 
 ### Aplicación
 > HUD con tiempo, progreso de corrupción, objetivo, dificultad y conmutadores de accesibilidad. Zona de juego con **tokens `{}`** (parcheables) y **virus** (penalización + mini susto).
